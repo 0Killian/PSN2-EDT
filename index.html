@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Emploi du temps</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@event-calendar/build@2.3.3/event-calendar.min.css">
+</head>
+<body style="margin: 0; padding: 10px;">
+    <script src="https://cdn.jsdelivr.net/npm/@event-calendar/build@2.3.3/event-calendar.min.js"></script>
+
+    <div id="calendar"></div>
+
+    <script>
+        let ec = new EventCalendar(document.getElementById("calendar"), {
+            view: 'timeGridWeek',
+            eventSources: [
+                {
+                    url: "/api/edt",
+                    method: "POST",
+                },
+            ],
+            firstDay: 1,
+            editable: false,
+            eventStartEditable: false,
+            eventDurationEditable: false,
+            slotMinTime: "09:00:00",
+            slotMaxTime: "20:00:00",
+            allDaySlot: false,
+            hiddenDays: [0, 6]
+        });
+    </script>
+</body>
+</html>
