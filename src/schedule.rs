@@ -1,6 +1,7 @@
 use chrono::{NaiveDate, Weekday};
 use anyhow::Result;
-use diesel::{BoolExpressionMethods, ExpressionMethods, MysqlConnection, QueryDsl, RunQueryDsl, SelectableHelper};
+use diesel::{BoolExpressionMethods, Connection, ExpressionMethods, MysqlConnection, QueryDsl, RunQueryDsl, SelectableHelper};
+use diesel::connection::SimpleConnection;
 use crate::models::Course;
 use crate::schema::course::dsl::course as course_dsl;
 use crate::schema::{Category, course};
@@ -24,40 +25,41 @@ impl Schedule {
     }
 
     pub async fn query_between(start: NaiveDate, end: NaiveDate, connection: &mut MysqlConnection) -> Result<Self> {
+        // The first query may (probably will) fail because the connection to the database has timed
+        // out. This is why we need to ensure that the connection is still alive before executing.
+        if !connection.batch_execute("SELECT 1").is_ok() {
+            *connection = MysqlConnection::establish(&std::env::var("DATABASE_URL")?)?;
+        }
+
         let dev_courses = course_dsl
             .filter(course::category.eq(Category::Dev)
                 .and(course::date.between(start, end)))
             .select(Course::as_select())
-            .load(connection)
-            .expect("Failed to query dev courses");
+            .load(connection)?;
 
         let infra_courses = course_dsl
             .filter(course::category.eq(Category::Infra)
                 .and(course::date.between(start, end)))
             .select(Course::as_select())
-            .load(connection)
-            .expect("Failed to query infra courses");
+            .load(connection)?;
 
         let dev_infra_courses = course_dsl
             .filter(course::category.eq(Category::DevInfra)
                 .and(course::date.between(start, end)))
             .select(Course::as_select())
-            .load(connection)
-            .expect("Failed to query dev/infra courses");
+            .load(connection)?;
 
         let marketing_courses = course_dsl
             .filter(course::category.eq(Category::Marketing)
                 .and(course::date.between(start, end)))
             .select(Course::as_select())
-            .load(connection)
-            .expect("Failed to query marketing courses");
+            .load(connection)?;
 
         let common_courses = course_dsl
             .filter(course::category.eq(Category::Common)
                 .and(course::date.between(start, end)))
             .select(Course::as_select())
-            .load(connection)
-            .expect("Failed to query common courses");
+            .load(connection)?;
 
         Ok(Self {
             start,
