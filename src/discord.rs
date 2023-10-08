@@ -41,7 +41,7 @@ async fn send_schedule(ctx: poise::Context<'_, Data, anyhow::Error>) -> Result<(
 }
 
 async fn send_week_schedule(cache_http: &impl CacheHttp, data: &Data) -> Result<()> {
-    let current_date = chrono::Local::now().date_naive();
+    let current_date = chrono::Local::now().date_naive() + chrono::Duration::days(7);
     let schedule = Schedule::query_week(current_date, data.db_connection.lock().await.deref_mut()).await;
 
     if schedule.is_err() {
